@@ -2,17 +2,21 @@ package main;
 
 
 import IdGenerated.IdGeneratorFactory;
+import main.Interface.IObservable;
+import main.Interface.IObserver;
 
 import java.io.IOException;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.List;
 
-public class Controller {
+public class Controller implements IObservable {
     private DBLayout layout;
     private Scheduler scheduler;
     private IdGeneratorFactory idGeneratorFactory;
     private Observer observer;
+    private List<IObserver> observers;
 
     //проверяет при открытии программы наличие старых тасков
     public ArrayList<Task> checkOldTask() {
@@ -33,12 +37,28 @@ public class Controller {
     //конструктор
     public Controller() throws IOException, ClassNotFoundException {
         layout = new DBLayout();
+        observers = new ArrayList<>();
         idGeneratorFactory = new IdGeneratorFactory();
         scheduler = new Scheduler(getNotExecuted());
         observer = new Observer(this);
     }
 
-    public Scheduler getScheduler(){
+    public void addObserver(IObserver o) {
+        observers.add(o);
+    }
+
+    @Override
+    public void removeObserver(IObserver o) {
+        observers.remove(o);
+    }
+
+    @Override
+    public void notifyObservers(Task task) throws IOException {
+        for (IObserver observer : observers)
+            observer.update(task);
+    }
+
+    public Scheduler getScheduler() {
         return scheduler;
     }
 
@@ -84,8 +104,9 @@ public class Controller {
         scheduler.setStop(true);
     }
 
-    public void setPerformed(int id, boolean check) {
+    public void isNotification(int id, boolean check) throws IOException {
         layout.setPerformed(id, check);
+        notifyObservers(getTaskById(id));
     }
 
     public int setNewId() {

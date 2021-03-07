@@ -12,13 +12,22 @@ public class ServerThread extends Thread {
 
     private Socket clientSocket;
     private Controller controller;
-    ObjectInputStream objectInputStream;
-    ObjectOutputStream objectOutputStream;
+    private ObjectInputStream objectInputStream;
+    private ObjectOutputStream objectOutputStream;
+    private Socket clientSocketScheduler;
+    private ObjectInputStream objectInputStreamScheduler;
+    private ObjectOutputStream objectOutputStreamScheduler;
+    private ObserverNotification observerNotification;
 
-    public ServerThread(Socket clientSocket) throws IOException, ClassNotFoundException {
+    public ServerThread(Socket clientSocket, Socket clientSocketScheduler) throws IOException, ClassNotFoundException {
         this.clientSocket = clientSocket;
+        this.clientSocketScheduler = clientSocketScheduler;
+        observerNotification = new ObserverNotification(this);
         controller = new Controller();
         this.start();
+        objectInputStreamScheduler = new ObjectInputStream(clientSocketScheduler.getInputStream());
+        objectOutputStreamScheduler = new ObjectOutputStream(clientSocketScheduler.getOutputStream());
+
     }
 
     @Override
@@ -74,6 +83,15 @@ public class ServerThread extends Thread {
         }
     }
 
+    public void isNotification(Task task) throws IOException {
+        String sendTask = "Notification\n" + task.sendTask();
+        objectOutputStreamScheduler.writeObject(sendTask);
+        objectOutputStreamScheduler.flush();
+    }
+
+    public Controller getController(){
+        return controller;
+    }
     private LocalDateTime getLocalDataTime(String s) throws IOException {
         String[] mainMas = s.split(" ");//0 - menu, 1 - id, 2 - date, 3 - time, 4 - type, 5 - text
         String[] helpMas = mainMas[2].split("\\.");

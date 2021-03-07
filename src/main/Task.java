@@ -78,6 +78,17 @@ public class Task implements Serializable {
                 "Статус: " + s;
     }
 
+    public String sendTask(){
+        String s;
+        if (performed){s = "Выполнена";}
+        else s ="Не выполнена";
+        return "ID: " + id + "\n" +
+                "Дата: " + date.getDayOfMonth() + "."+ date.getMonthValue() + "."+ date.getYear() + " " + date.getHour() + ":" + date.getMinute()+ "\n" +
+                "Тип: " + type + "\n" +
+                "Текст: " + text + "\n" +
+                "Статус: " + s;
+    }
+
    /* @Override
     public int compareTo(Task o) {
         SimpleDateFormat dateFormat = new SimpleDateFormat("dd.MM.yyyy HH:mm");

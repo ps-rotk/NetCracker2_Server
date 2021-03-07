@@ -4,6 +4,7 @@ package main;
 import main.Interface.IObservable;
 import main.Interface.IObserver;
 
+import java.io.IOException;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
@@ -41,14 +42,10 @@ public class Scheduler extends Thread implements IObservable {
     }
 
     @Override
-    public void notifyObservers(Task task) {
+    public void notifyObservers(Task task) throws IOException {
         for (IObserver observer : observers)
             observer.update(task);
     }
-
-    /*public void startThread(){
-        this.start();
-    }*/
 
     private void interruptThread(){
         this.interrupt();
@@ -64,9 +61,9 @@ public class Scheduler extends Thread implements IObservable {
                         try {
                             sleep(time);
                             notifyObservers(task);
-                            System.out.println("Задача наступила: " + task.toString());
+                            System.out.println("Задача наступила: " + task.toString()); //TODO: удалить, юзал для отладки
 
-                        } catch (InterruptedException e) {
+                        } catch (InterruptedException | IOException e) {
                             break;
                         }
                     }
