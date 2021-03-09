@@ -9,18 +9,18 @@ public class Server {
     public Server() {
         try {
             ServerSocket serverSocket = new ServerSocket(1024);
+            ServerSocket serverSocketScheduler = new ServerSocket(1025);
             System.out.println("Запущен");
             while (true) {
                 Socket clientSocket = serverSocket.accept();
-                System.out.println("подключение");
-                clientSocket.setSoTimeout(600000);
-                Socket clientSocketScheduler = serverSocket.accept();
+                clientSocket.setSoTimeout(10000);
+                Socket clientSocketScheduler = serverSocketScheduler.accept();
+                clientSocket.setSoTimeout(10000);
                 ServerThread serverThread = new ServerThread(clientSocket, clientSocketScheduler);
             }
 
         } catch (IOException | ClassNotFoundException e) {
             System.out.println("Не получилось прослушать порт");
-            System.exit(-1);
         }
     }
 }

@@ -7,104 +7,152 @@ import java.net.Socket;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
+import java.util.ArrayList;
 
 public class ServerThread extends Thread {
 
-    private Socket clientSocket;
-    private Controller controller;
-    private ObjectInputStream objectInputStream;
-    private ObjectOutputStream objectOutputStream;
-    private Socket clientSocketScheduler;
-    private ObjectInputStream objectInputStreamScheduler;
-    private ObjectOutputStream objectOutputStreamScheduler;
-    private ObserverNotification observerNotification;
+    Socket clientSocket;
+    Controller controller;
+    ObjectInputStream objectInputStream;
+    ObjectOutputStream objectOutputStream;
+    Socket clientSocketScheduler;
+    ObjectInputStream objectInputStreamScheduler;
+    ObjectOutputStream objectOutputStreamScheduler;
+    ObserverNotification observerNotification;
 
     public ServerThread(Socket clientSocket, Socket clientSocketScheduler) throws IOException, ClassNotFoundException {
-        this.clientSocket = clientSocket;
         this.clientSocketScheduler = clientSocketScheduler;
-        observerNotification = new ObserverNotification(this);
-        controller = new Controller();
-        this.start();
-        objectInputStreamScheduler = new ObjectInputStream(clientSocketScheduler.getInputStream());
-        objectOutputStreamScheduler = new ObjectOutputStream(clientSocketScheduler.getOutputStream());
+        this.clientSocket = clientSocket;
+        objectInputStreamScheduler = new ObjectInputStream(this.clientSocketScheduler.getInputStream());
+        objectOutputStreamScheduler = new ObjectOutputStream(this.clientSocketScheduler.getOutputStream());
+        objectOutputStream = new ObjectOutputStream(this.clientSocket.getOutputStream());
+        objectInputStream = new ObjectInputStream(this.clientSocket.getInputStream());
 
+        controller = new Controller();
+        observerNotification = new ObserverNotification(this);
+        this.start();
     }
 
     @Override
     public void run() {
         try {
+            ArrayList<Task> arrayList = null;
             System.out.println("Соединение с сервером успешно установлено");
-            objectInputStream = new ObjectInputStream(clientSocket.getInputStream());
-            objectOutputStream = new ObjectOutputStream(clientSocket.getOutputStream());
-
             while (true) {
-                while (objectInputStream.available() > 0) {
-                    String t = objectInputStream.readUTF(); //0 - menu, 1 - id, 2 - date, 3 - time, 4 - type, 5 - text
-                    String[] mainMas = t.split(" ");
-                    switch (Integer.parseInt(mainMas[0])) {
-                        case 1:
-                            objectOutputStream.writeObject(controller.getListTasks());
+                try {
+                    String t = (String) objectInputStream.readObject();
+                    String[] mainMas = t.split("\n");
+                    switch (mainMas[0]) {
+                        case "1":
+                            System.out.println("Принято сообщение о получении списка задач");
+                            objectOutputStream.writeObject(getStringFromList(controller.getListTasks()));
                             objectOutputStream.flush();
+                            System.out.println("Выполнено");
                             break;
-                        case 2:
-                            Task task = new Task(controller.setNewId(), getLocalDataTime(t), mainMas[4], mainMas[5]);
+                        case "2":
+                            System.out.println("Принято сообщение о добавлении задачи");
+                            Task task = new Task(controller.setNewId(), getLocalDataTime(mainMas[1], mainMas[2]), mainMas[3], mainMas[4]);
                             controller.addTask(task);
-                            break;
-                        case 3:
-                            controller.updateTask(new Task(controller.getTaskById(Integer.parseInt(mainMas[1])).getId(), getLocalDataTime(t), mainMas[4], mainMas[5]));
+                            objectOutputStream.writeObject("Задача добавлена");
                             objectOutputStream.flush();
+                            System.out.println("Выполнено");
                             break;
-                        case 4:
-                            objectOutputStream.writeObject(controller.getTaskByDate(getLocalData(t)));
+                        case "3":
+                            System.out.println("Принято сообщение об обновлении задачи");
+                            controller.updateTask(new Task(controller.getTaskById(Integer.parseInt(mainMas[1])).getId(), getLocalDataTime(mainMas[2], mainMas[3]), mainMas[4], mainMas[5]));
                             objectOutputStream.flush();
-                            break;
-                        case 5:
-                            objectOutputStream.writeObject(controller.getTaskByQuery(getLocalData(t), mainMas[4]));
+                            objectOutputStream.writeObject("Задача обновлена");
                             objectOutputStream.flush();
+                            System.out.println("Выполнено");
                             break;
-                        case 6:
+                        case "4":
+                            System.out.println("Принято сообщение о получении списка задач по дате");
+                            objectOutputStream.writeObject(getStringFromList(controller.getTaskByDate(getLocalData(mainMas[1]))));
+                            objectOutputStream.flush();
+                            System.out.println("Выполнено");
+                            break;
+                        case "5":
+                            System.out.println("Принято сообщение о получении списка задач по дате и типу");
+                            objectOutputStream.writeObject(getStringFromList(controller.getTaskByQuery(getLocalData(mainMas[1]), mainMas[2])));
+                            objectOutputStream.flush();
+                            System.out.println("Выполнено");
+                            break;
+                        case "6":
+                            System.out.println("Принято сообщение об удалении задачи");
                             controller.deleteTaskById(controller.getTaskById(Integer.parseInt(mainMas[1])).getId());
+                            objectOutputStream.writeObject("Задача удалена");
+                            objectOutputStream.flush();
+                            System.out.println("Выполнено");
                             break;
-                        case 7:
-                            controller.deleteTaskById(controller.getTaskById(Integer.parseInt(mainMas[1])).getId());
+
+                        case "7":
+                            System.out.println("Принято сообщение о получении списка  устаревших и выполненых задач"); //TODO: не работает
+                            arrayList = controller.checkOldTask();
+                            objectOutputStream.writeObject(getStringFromList(arrayList));
+                            objectOutputStream.flush();
+                            System.out.println("Выполнено");
                             break;
-                        case 8:
+                        case "delete":
+                            System.out.println("Удаление");
+                            for (Task task1 : arrayList) {
+                                controller.deleteTaskById(task1.getId());
+                            }
+                            System.out.println("Выполнено");
+                            break;
+                        case "8":
+                            System.out.println("Сеанс оборван");
                             controller.exit();
-                            break;
+                            clientSocket.close();
+                            clientSocketScheduler.close();
+                            this.interrupt();
+                            return;
                         default:
                             System.out.println("Неверное число, повторите ввод");
                             break;
 
                     }
+                } catch (IOException e) {
+                    System.out.println("Сеанс оборван");
+                    clientSocket.close();
+                    clientSocketScheduler.close();
+                    this.interrupt();
+                    return;
                 }
             }
-        } catch (IOException e) {
+        } catch (ClassNotFoundException | IOException e) {
             e.printStackTrace();
         }
     }
 
     public void isNotification(Task task) throws IOException {
-        String sendTask = "Notification\n" + task.sendTask();
+        String sendTask = task.toString();
         objectOutputStreamScheduler.writeObject(sendTask);
         objectOutputStreamScheduler.flush();
     }
 
-    public Controller getController(){
+    public Controller getController() {
         return controller;
     }
-    private LocalDateTime getLocalDataTime(String s) throws IOException {
-        String[] mainMas = s.split(" ");//0 - menu, 1 - id, 2 - date, 3 - time, 4 - type, 5 - text
-        String[] helpMas = mainMas[2].split("\\.");
+
+    private LocalDateTime getLocalDataTime(String date, String time) throws IOException {
+        String[] helpMas = date.split("\\.");
         LocalDate localDate = LocalDate.of(Integer.parseInt(helpMas[2]), Integer.parseInt(helpMas[1]), Integer.parseInt(helpMas[0]));
-        helpMas = mainMas[3].split(":");
-        LocalTime localTime = LocalTime.of(Integer.parseInt(helpMas[1]), Integer.parseInt(helpMas[0]));
+        helpMas = time.split(":");
+        LocalTime localTime = LocalTime.of(Integer.parseInt(helpMas[0]), Integer.parseInt(helpMas[1]));
         return LocalDateTime.of(localDate, localTime);
     }
 
-    private LocalDate getLocalData(String s) throws IOException {
-        String[] mainMas = s.split(" ");//0 - menu, 1 - id, 2 - date, 3 - time, 4 - type, 5 - text
-        String[] helpMas = mainMas[2].split("\\.");
+    private LocalDate getLocalData(String date) throws IOException {
+        String[] helpMas = date.split("\\.");
         return LocalDate.of(Integer.parseInt(helpMas[2]), Integer.parseInt(helpMas[1]), Integer.parseInt(helpMas[0]));
+    }
 
+    private String getStringFromList(ArrayList<Task> listTask) {
+        StringBuilder s = new StringBuilder();
+        for (Task task : listTask) {
+            s.append(task.toString());
+            s.append("\n");
+        }
+        return s.toString();
     }
 }
