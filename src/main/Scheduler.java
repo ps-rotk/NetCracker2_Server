@@ -28,7 +28,7 @@ public class Scheduler extends Thread implements IObservable {
 
     public void setList(ArrayList<Task> list) {
         this.list = list;
-        interruptThread();
+        this.interrupt();
     }
 
     @Override
@@ -47,23 +47,25 @@ public class Scheduler extends Thread implements IObservable {
             observer.update(task);
     }
 
-    private void interruptThread(){
-        this.interrupt();
-    }
-
     @Override
     public void run() {
+        System.out.println("Scheduler запущен");
         while (!stop) {
             if (list.size() != 0) {
+                System.out.println("2");
                 for (Task task : list) {
+                    System.out.println("3");
                     if (!task.getPerformed()) {
                         long time = ChronoUnit.MILLIS.between(LocalDateTime.now(), task.getDate());
+                        System.out.println("Время засыпания: " + time);
                         try {
                             sleep(time);
+                            System.out.println("Проснулся");
                             notifyObservers(task);
                             System.out.println("Задача наступила: " + task.toString());
 
                         } catch (InterruptedException | IOException e) {
+                            System.out.println("Обновление списка в Scheduler");
                             break;
                         }
                     }
@@ -72,6 +74,4 @@ public class Scheduler extends Thread implements IObservable {
 
         }
     }
-
-
 }

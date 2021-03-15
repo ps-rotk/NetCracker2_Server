@@ -20,15 +20,14 @@ public class ServerThread extends Thread {
     ObjectOutputStream objectOutputStreamScheduler;
     ObserverNotification observerNotification;
 
-    public ServerThread(Socket clientSocket, Socket clientSocketScheduler) throws IOException, ClassNotFoundException {
+    public ServerThread(Socket clientSocket, Socket clientSocketScheduler, Controller controller) throws IOException, ClassNotFoundException {
         this.clientSocketScheduler = clientSocketScheduler;
         this.clientSocket = clientSocket;
+        this.controller = controller;
         objectInputStreamScheduler = new ObjectInputStream(this.clientSocketScheduler.getInputStream());
         objectOutputStreamScheduler = new ObjectOutputStream(this.clientSocketScheduler.getOutputStream());
         objectOutputStream = new ObjectOutputStream(this.clientSocket.getOutputStream());
         objectInputStream = new ObjectInputStream(this.clientSocket.getInputStream());
-
-        controller = new Controller();
         observerNotification = new ObserverNotification(this);
         this.start();
     }
@@ -50,8 +49,8 @@ public class ServerThread extends Thread {
                             System.out.println("Выполнено");
                             break;
                         case "2":
-                            System.out.println("Принято сообщение о добавлении задачи");
                             Task task = new Task(controller.setNewId(), getLocalDataTime(mainMas[1], mainMas[2]), mainMas[3], mainMas[4]);
+                            System.out.println("Принято сообщение о добавлении задачи " + task.toString());
                             controller.addTask(task);
                             objectOutputStream.writeObject("Задача добавлена");
                             objectOutputStream.flush();
