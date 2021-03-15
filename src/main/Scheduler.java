@@ -51,19 +51,21 @@ public class Scheduler extends Thread implements IObservable {
     public void run() {
         System.out.println("Scheduler запущен");
         while (!stop) {
-           // System.out.println(this.isInterrupted());
+            try {
+                sleep(2);
+            } catch (InterruptedException e) {
+                System.out.println("Проснулся");
+                continue;
+            }
             if (list.size() != 0) {
-                System.out.println("2");
                 for (Task task : list) {
-                    System.out.println("3");
                     if (!task.getPerformed()) {
                         long time = ChronoUnit.MILLIS.between(LocalDateTime.now(), task.getDate());
-                        System.out.println("Время засыпания: " + time);
                         try {
+                            System.out.println("Заснул на " + time + " до " + task.getDate());
                             sleep(time);
-                            System.out.println("Проснулся");
-                            notifyObservers(task);
                             System.out.println("Задача наступила: " + task.toString());
+                            notifyObservers(task);
 
                         } catch (InterruptedException | IOException e) {
                             System.out.println("Обновление списка в Scheduler");

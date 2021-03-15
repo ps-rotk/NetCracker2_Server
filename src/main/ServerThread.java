@@ -148,9 +148,11 @@ public class ServerThread extends Thread {
 
     private String getStringFromList(ArrayList<Task> listTask) {
         StringBuilder s = new StringBuilder();
-        for (Task task : listTask) {
-            s.append(task.toString());
-            s.append("\n");
+        if (listTask != null) {
+            for (Task task : listTask) {
+                s.append(task.toString());
+                s.append("\n");
+            }
         }
         return s.toString();
     }
