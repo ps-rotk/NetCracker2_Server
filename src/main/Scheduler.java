@@ -51,6 +51,7 @@ public class Scheduler extends Thread implements IObservable {
     public void run() {
         System.out.println("Scheduler запущен");
         while (!stop) {
+           // System.out.println(this.isInterrupted());
             if (list.size() != 0) {
                 System.out.println("2");
                 for (Task task : list) {
