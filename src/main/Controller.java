@@ -22,7 +22,7 @@ public class Controller implements IObservable {
     public ArrayList<Task> checkOldTask() {
         ArrayList<Task> deletedList = new ArrayList<>();
         if (layout.getAllTasks().size() == 0)
-            return null;
+            return deletedList;
         else {
             for (Task t : layout.getAllTasks()) {
                 if (t.getPerformed() || t.getDate().isBefore(LocalDateTime.now())) {
