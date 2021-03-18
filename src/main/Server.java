@@ -19,10 +19,11 @@ public class Server {
                 ServerSocket serverSocket = new ServerSocket(lastConnection.getClientConnection());
                 ServerSocket serverSocketScheduler = new ServerSocket(lastConnection.getSchedulerConnection());
                 Socket clientSocket = serverSocket.accept();
-                clientSocket.setSoTimeout(30000);
+                clientSocket.setSoTimeout(15000);
                 Socket clientSocketScheduler = serverSocketScheduler.accept();
-                clientSocket.setSoTimeout(30000);
+                clientSocket.setSoTimeout(15000);
                 ServerThread serverThread = new ServerThread(clientSocket, clientSocketScheduler, controller);
+                serverThread.begin();
             }
 
         } catch (IOException | ClassNotFoundException e) {

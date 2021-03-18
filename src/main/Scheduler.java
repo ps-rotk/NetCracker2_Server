@@ -54,7 +54,6 @@ public class Scheduler extends Thread implements IObservable {
             try {
                 sleep(2);
             } catch (InterruptedException e) {
-                System.out.println("Проснулся");
                 continue;
             }
             if (list.size() != 0) {

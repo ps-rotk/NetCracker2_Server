@@ -6,12 +6,12 @@ public class Connection implements Serializable {
     private int clientConnection;
     private int schedulerConnection;
 
-    Connection(){
+    public Connection(){
         clientConnection = 1023;
         schedulerConnection = 1024;
     }
 
-    Connection (int clientConnection, int schedulerConnection){
+    public Connection (int clientConnection, int schedulerConnection){
         this.clientConnection = clientConnection;
         this.schedulerConnection = schedulerConnection;
     }

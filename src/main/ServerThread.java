@@ -20,10 +20,14 @@ public class ServerThread extends Thread {
     ObjectOutputStream objectOutputStreamScheduler;
     ObserverNotification observerNotification;
 
-    public ServerThread(Socket clientSocket, Socket clientSocketScheduler, Controller controller) throws IOException, ClassNotFoundException {
+    public ServerThread(Socket clientSocket, Socket clientSocketScheduler, Controller controller) {
         this.clientSocketScheduler = clientSocketScheduler;
         this.clientSocket = clientSocket;
         this.controller = controller;
+
+    }
+
+    public void begin() throws IOException {
         objectInputStreamScheduler = new ObjectInputStream(this.clientSocketScheduler.getInputStream());
         objectOutputStreamScheduler = new ObjectOutputStream(this.clientSocketScheduler.getOutputStream());
         objectOutputStream = new ObjectOutputStream(this.clientSocket.getOutputStream());
@@ -31,7 +35,6 @@ public class ServerThread extends Thread {
         observerNotification = new ObserverNotification(this);
         this.start();
     }
-
     @Override
     public void run() {
         try {
@@ -133,7 +136,7 @@ public class ServerThread extends Thread {
         return controller;
     }
 
-    private LocalDateTime getLocalDataTime(String date, String time) throws IOException {
+    private LocalDateTime getLocalDataTime(String date, String time) {
         String[] helpMas = date.split("\\.");
         LocalDate localDate = LocalDate.of(Integer.parseInt(helpMas[2]), Integer.parseInt(helpMas[1]), Integer.parseInt(helpMas[0]));
         helpMas = time.split(":");
@@ -141,7 +144,7 @@ public class ServerThread extends Thread {
         return LocalDateTime.of(localDate, localTime);
     }
 
-    private LocalDate getLocalData(String date) throws IOException {
+    private LocalDate getLocalData(String date)  {
         String[] helpMas = date.split("\\.");
         return LocalDate.of(Integer.parseInt(helpMas[2]), Integer.parseInt(helpMas[1]), Integer.parseInt(helpMas[0]));
     }
