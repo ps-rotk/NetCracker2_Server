@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.Socket;
+import java.net.SocketTimeoutException;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
@@ -12,19 +13,35 @@ import java.util.ArrayList;
 public class ServerThread extends Thread {
 
     Socket clientSocket;
-    Controller controller;
     ObjectInputStream objectInputStream;
     ObjectOutputStream objectOutputStream;
     Socket clientSocketScheduler;
+    Controller controller;
     ObjectInputStream objectInputStreamScheduler;
     ObjectOutputStream objectOutputStreamScheduler;
-    ObserverNotification observerNotification;
+
+    public ObjectInputStream getObjectInputStream() {
+        return objectInputStream;
+    }
+
+    public ObjectInputStream getObjectInputStreamScheduler() {
+        return objectInputStreamScheduler;
+    }
+
+    public Socket getClientSocket() {
+        return clientSocket;
+    }
+
+    public Socket getClientSocketScheduler() {
+        return clientSocketScheduler;
+    }
+    //ObserverNotification observerNotification;
 
     public ServerThread(Socket clientSocket, Socket clientSocketScheduler, Controller controller) {
         this.clientSocketScheduler = clientSocketScheduler;
         this.clientSocket = clientSocket;
         this.controller = controller;
-
+        //observerNotification = new ObserverNotification(this, controller);
     }
 
     public void begin() throws IOException {
@@ -32,9 +49,9 @@ public class ServerThread extends Thread {
         objectOutputStreamScheduler = new ObjectOutputStream(this.clientSocketScheduler.getOutputStream());
         objectOutputStream = new ObjectOutputStream(this.clientSocket.getOutputStream());
         objectInputStream = new ObjectInputStream(this.clientSocket.getInputStream());
-        observerNotification = new ObserverNotification(this);
         this.start();
     }
+
     @Override
     public void run() {
         try {
@@ -127,9 +144,16 @@ public class ServerThread extends Thread {
     }
 
     public void isNotification(Task task) throws IOException {
-        String sendTask = task.toString();
-        objectOutputStreamScheduler.writeObject(sendTask);
-        objectOutputStreamScheduler.flush();
+        try {
+            String sendTask = task.toString();
+            objectOutputStreamScheduler.writeObject(sendTask);
+            objectOutputStreamScheduler.flush();
+            System.out.println("Задача " + sendTask + "\nотправлена");
+        } catch (SocketTimeoutException e) {
+            System.out.println("Сокеты закрыты по таймауту");
+           clientSocket.close();
+           clientSocketScheduler.close();
+        }
     }
 
     public Controller getController() {
@@ -144,7 +168,7 @@ public class ServerThread extends Thread {
         return LocalDateTime.of(localDate, localTime);
     }
 
-    private LocalDate getLocalData(String date)  {
+    private LocalDate getLocalData(String date) {
         String[] helpMas = date.split("\\.");
         return LocalDate.of(Integer.parseInt(helpMas[2]), Integer.parseInt(helpMas[1]), Integer.parseInt(helpMas[0]));
     }

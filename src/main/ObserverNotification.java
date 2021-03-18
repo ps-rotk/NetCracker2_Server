@@ -5,15 +5,15 @@ import main.Interface.IObserver;
 import java.io.IOException;
 
 public class ObserverNotification implements IObserver {
-    private ServerThread serverThread;
+    private Server server;
 
-    public ObserverNotification(ServerThread serverThread) {
-        this.serverThread = serverThread;
-        serverThread.getController().addObserver(this);
+    public ObserverNotification(Server server, Controller controller) {
+        this.server = server;
+        controller.addObserver(this);
     }
 
     @Override
     public void update(Task task) throws IOException {
-        serverThread.isNotification(task);
+        server.isNotification(task);
     }
 }

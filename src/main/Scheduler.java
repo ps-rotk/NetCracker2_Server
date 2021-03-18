@@ -65,6 +65,11 @@ public class Scheduler extends Thread implements IObservable {
                             sleep(time);
                             System.out.println("Задача наступила: " + task.toString());
                             notifyObservers(task);
+                            try {
+                                sleep(20);
+                            } catch (InterruptedException e) {
+                                continue;
+                            }
 
                         } catch (InterruptedException | IOException e) {
                             System.out.println("Обновление списка в Scheduler");
